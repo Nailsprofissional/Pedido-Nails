@@ -19,6 +19,14 @@
       padding: 20px;
       border: 1px solid #ccc;
       display: none;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -43,9 +51,10 @@
       if (pedido) {
         resultado.innerHTML = `
           <h2>Pedido: ${pedido.numero}</h2>
-          <p><strong>Situação:</strong> ${pedido.situacao}</p>
-          <p><strong>Entregue por:</strong> ${pedido.entregue}</p>
-          <p><strong>Pagamento:</strong> ${pedido.pagamento}</p>
+          <label><strong>Situação:</strong> <input type="text" id="inputSituacao" value="${pedido.situacao || ''}" /></label>
+          <label><strong>Entregue por:</strong> <input type="text" id="inputEntregue" value="${pedido.entregue || ''}" /></label>
+          <label><strong>Pagamento:</strong> <input type="text" id="inputPagamento" value="${pedido.pagamento || ''}" /></label>
+          <button onclick="salvarPedido('${pedido.numero}')">Salvar</button>
         `;
       } else {
         resultado.innerHTML = `<p>Pedido <strong>${codigo}</strong> não encontrado.</p>`;
@@ -54,15 +63,32 @@
       resultado.style.display = "block";
     }
 
+    function salvarPedido(numero) {
+      const situacao = document.getElementById("inputSituacao").value.trim();
+      const entregue = document.getElementById("inputEntregue").value.trim();
+      const pagamento = document.getElementById("inputPagamento").value.trim();
+
+      const index = pedidos.findIndex(p => p.numero === numero);
+      if (index !== -1) {
+        pedidos[index].situacao = situacao;
+        pedidos[index].entregue = entregue;
+        pedidos[index].pagamento = pagamento;
+
+        alert("Dados salvos localmente!");
+        // Atualiza a exibição para refletir os dados atualizados
+        buscarPedido();
+      } else {
+        alert("Erro: pedido não encontrado para salvar.");
+      }
+    }
+
     function carregarPedidos() {
       fetch(PLANILHA_PEDIDOS)
         .then(response => response.text())
         .then(csv => {
           const linhas = csv.trim().split("\n");
-
-          // IGNORA a linha 0 (lixo), usa a linha 1 como cabeçalho, e pega os dados da linha 2 em diante
+          // Ignorar linha 0 (lixo), usar linha 1 como cabeçalho e dados da linha 2 em diante
           const dados = linhas.slice(2);
-
           pedidos = dados.map(linha => {
             const valores = linha.split(",");
             return {
