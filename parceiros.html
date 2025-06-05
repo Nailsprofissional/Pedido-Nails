@@ -1,113 +1,113 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Consulta de Pedido</title>
+  <meta charset="UTF-8" />
+  <title>Consulta e Atualização de Pedido</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      max-width: 600px;
-      margin: auto;
-      text-align: center;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      margin: 10px 0;
-      width: 90%;
-    }
-    #resultado {
-      display: none;
-      margin-top: 20px;
-      text-align: left;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      text-align: left;
-    }
+    body { font-family: Arial; padding: 20px; max-width: 400px; margin: auto; }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; font-size: 16px; }
+    label { font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Consulta de Pedido</h1>
-  <input type="text" id="pedidoInput" placeholder="Digite o número do pedido" />
-  <button onclick="buscarPedido()">Buscar</button>
 
-  <div id="resultado">
-    <h2>Pedido: <span id="pedidoNumero"></span></h2>
+  <h2>Consulta de Pedido</h2>
+  <label for="pedidoInput">Número do pedido:</label>
+  <input type="text" id="pedidoInput" placeholder="Ex: 7485" />
 
-    <label>Situação:
-      <input type="text" id="situacaoInput" />
-    </label>
-    <label>Entregue por:
-      <input type="text" id="entregueInput" />
-    </label>
-    <label>Pagamento:
-      <input type="text" id="pagamentoInput" />
-    </label>
+  <button id="buscarBtn">Buscar Pedido</button>
 
-    <button onclick="salvarEdicao()">Salvar Alterações</button>
+  <div id="resultado" style="display:none;">
+    <p><strong>Número do Pedido:</strong> <span id="numPedido"></span></p>
+    <label for="situacao">Situação:</label>
+    <input type="text" id="situacao" />
+
+    <label for="entregue">Entregue por:</label>
+    <input type="text" id="entregue" />
+
+    <label for="pagamento">Pagamento:</label>
+    <input type="text" id="pagamento" />
+
+    <button id="atualizarBtn">Atualizar Pedido</button>
+
+    <p id="statusMsg"></p>
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxaOU_EYFo6YJnDOT9oEKMRxm_izBmwUej7un-yT_Nh1yeWnT5voFCmH_Jv51pYyzvcTQ/exec';
-    let dadosPedidos = [];
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwTO_yGXNb2zZ4aYsstZO7auCZ7tmVmYLR8VzdsdU7BwtE5J0dcUk1mvAshDw1db2XOww/exec';
+    const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/'; // Proxy para contornar CORS
 
-    // Carrega todos os dados da API (GET)
-    function carregarPedidos() {
-      fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          dadosPedidos = data;
-        })
-        .catch(err => alert("Erro ao carregar pedidos: " + err));
-    }
+    let pedidos = [];
 
-    function buscarPedido() {
-      const numero = document.getElementById("pedidoInput").value.trim();
-      const pedido = dadosPedidos.find(p => String(p["Número do Pedido"]) === numero);
-
-      if (pedido) {
-        document.getElementById("pedidoNumero").innerText = numero;
-        document.getElementById("situacaoInput").value = pedido["Situação"];
-        document.getElementById("entregueInput").value = pedido["Entregue por"];
-        document.getElementById("pagamentoInput").value = pedido["Pagamento"];
-        document.getElementById("resultado").style.display = "block";
-      } else {
-        alert("Pedido não encontrado.");
-        document.getElementById("resultado").style.display = "none";
+    async function carregarPedidos() {
+      try {
+        const res = await fetch(CORS_PROXY + API_URL);
+        pedidos = await res.json();
+        console.log('Pedidos carregados:', pedidos);
+      } catch (e) {
+        alert('Erro ao carregar pedidos: ' + e.message);
       }
     }
 
-    function salvarEdicao() {
-      const numero = document.getElementById("pedidoNumero").innerText;
-      const situacao = document.getElementById("situacaoInput").value;
-      const entregue = document.getElementById("entregueInput").value;
-      const pagamento = document.getElementById("pagamentoInput").value;
-
-      fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          numero,
-          situacao,
-          entregue,
-          pagamento
-        })
-      })
-      .then(res => res.text())
-      .then(msg => {
-        alert(msg);
-        carregarPedidos(); // Recarrega dados atualizados
-      })
-      .catch(err => alert("Erro ao salvar: " + err));
+    function mostrarPedido(pedido) {
+      document.getElementById('numPedido').textContent = pedido['Número do Pedido'];
+      document.getElementById('situacao').value = pedido['Situação'] || '';
+      document.getElementById('entregue').value = pedido['Entregue por'] || '';
+      document.getElementById('pagamento').value = pedido['Pagamento'] || '';
+      document.getElementById('resultado').style.display = 'block';
+      document.getElementById('statusMsg').textContent = '';
     }
 
-    // Carrega ao iniciar
+    document.getElementById('buscarBtn').addEventListener('click', () => {
+      const numPedido = document.getElementById('pedidoInput').value.trim();
+      if (!numPedido) {
+        alert('Informe o número do pedido!');
+        return;
+      }
+      const pedido = pedidos.find(p => String(p['Número do Pedido']) === numPedido);
+      if (pedido) {
+        mostrarPedido(pedido);
+      } else {
+        alert('Pedido não encontrado!');
+      }
+    });
+
+    document.getElementById('atualizarBtn').addEventListener('click', async () => {
+      const numPedido = document.getElementById('numPedido').textContent;
+      const situacao = document.getElementById('situacao').value.trim();
+      const entregue = document.getElementById('entregue').value.trim();
+      const pagamento = document.getElementById('pagamento').value.trim();
+
+      const dadosParaEnviar = {
+        "Número do Pedido": numPedido,
+        situacao,
+        entregue,
+        pagamento
+      };
+
+      try {
+        const res = await fetch(CORS_PROXY + API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dadosParaEnviar)
+        });
+        const texto = await res.text();
+        document.getElementById('statusMsg').textContent = texto;
+        // Atualizar localmente os dados para refletir a alteração
+        const pedidoLocal = pedidos.find(p => String(p['Número do Pedido']) === numPedido);
+        if (pedidoLocal) {
+          pedidoLocal['Situação'] = situacao;
+          pedidoLocal['Entregue por'] = entregue;
+          pedidoLocal['Pagamento'] = pagamento;
+        }
+      } catch (e) {
+        alert('Erro ao atualizar pedido: ' + e.message);
+      }
+    });
+
+    // Carrega dados ao abrir a página
     carregarPedidos();
   </script>
+
 </body>
 </html>
