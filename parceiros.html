@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rastreamento de Parceiros</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    #resultado {
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Consulta para Parceiros</h1>
+  <p>Digite o código do parceiro:</p>
+  <input type="text" id="codigoInput" placeholder="Ex: P001" />
+  <button onclick="buscarParceiro()">Buscar</button>
+
+  <div id="resultado"></div>
+
+  <script>
+    const PLANILHA_PARCEIROS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQO5w2nTq_15r0NqsEL0h0mf7-3cqEhqVz48cU04a8WJmNNr7jCmf5_blN6A-0ndTb2ic9oCEMJu3GR/pub?gid=0&single=true&output=csv";
+
+    let parceiros = [];
+
+    function buscarParceiro() {
+      const codigo = document.getElementById("codigoInput").value.trim();
+      const resultado = document.getElementById("resultado");
+      const parceiro = parceiros.find(p => p.codigo === codigo);
+
+      if (parceiro) {
+        resultado.innerHTML = `
+          <h2>Parceiro: ${parceiro.codigo}</h2>
+          <p><strong>Nome:</strong> ${parceiro.nome}</p>
+          <p><strong>Status:</strong> ${parceiro.status}</p>
+        `;
+      } else {
+        resultado.innerHTML = `<p>Parceiro <strong>${codigo}</strong> não encontrado.</p>`;
+      }
+
+      resultado.style.display = "block";
+    }
+
+    function carregarParceiros() {
+      fetch(PLANILHA_PARCEIROS)
+        .then(response => response.text())
+        .then(csv => {
+          const linhas = csv.trim().split("\n");
+          parceiros = linhas.slice(1).map(linha => {
+            const valores = linha.split(",");
+            return {
+              codigo: valores[0].trim(),
+              nome: valores[1]?.trim(),
+              status: valores[2]?.trim()
+            };
+          });
+        });
+    }
+
+    carregarParceiros();
+  </script>
+</body>
+</html>
