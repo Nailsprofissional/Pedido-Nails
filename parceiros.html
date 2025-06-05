@@ -1,106 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Rastreamento de Pedido</title>
+  <meta charset="UTF-8">
+  <title>Consulta de Pedido</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       padding: 40px;
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
     }
     input, button {
       padding: 10px;
       font-size: 16px;
-      margin-top: 20px;
+      margin: 10px 0;
+      width: 90%;
     }
     #resultado {
-      margin-top: 30px;
-      padding: 20px;
-      border: 1px solid #ccc;
       display: none;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
+      margin-top: 20px;
       text-align: left;
     }
     label {
       display: block;
-      margin-bottom: 10px;
+      margin-top: 10px;
+      text-align: left;
     }
   </style>
 </head>
 <body>
   <h1>Consulta de Pedido</h1>
-  <p>Digite o número do pedido:</p>
-  <input type="text" id="codigoInput" placeholder="Ex: 7485" />
+  <input type="text" id="pedidoInput" placeholder="Digite o número do pedido" />
   <button onclick="buscarPedido()">Buscar</button>
 
-  <div id="resultado"></div>
+  <div id="resultado">
+    <h2>Pedido: <span id="pedidoNumero"></span></h2>
+
+    <label>Situação:
+      <input type="text" id="situacaoInput" />
+    </label>
+    <label>Entregue por:
+      <input type="text" id="entregueInput" />
+    </label>
+    <label>Pagamento:
+      <input type="text" id="pagamentoInput" />
+    </label>
+
+    <button onclick="salvarEdicao()">Salvar Alterações</button>
+  </div>
 
   <script>
-    const PLANILHA_PEDIDOS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQO5w2nTq_15r0NqsEL0h0mf7-3cqEhqVz48cU04a8WJmNNr7jCmf5_blN6A-0ndTb2ic9oCEMJu3GR/pub?gid=0&single=true&output=csv";
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxaOU_EYFo6YJnDOT9oEKMRxm_izBmwUej7un-yT_Nh1yeWnT5voFCmH_Jv51pYyzvcTQ/exec';
+    let dadosPedidos = [];
 
-    let pedidos = [];
+    // Carrega todos os dados da API (GET)
+    function carregarPedidos() {
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+          dadosPedidos = data;
+        })
+        .catch(err => alert("Erro ao carregar pedidos: " + err));
+    }
 
     function buscarPedido() {
-      const codigo = document.getElementById("codigoInput").value.trim();
-      const resultado = document.getElementById("resultado");
-      const pedido = pedidos.find(p => p.numero === codigo);
+      const numero = document.getElementById("pedidoInput").value.trim();
+      const pedido = dadosPedidos.find(p => String(p["Número do Pedido"]) === numero);
 
       if (pedido) {
-        resultado.innerHTML = `
-          <h2>Pedido: ${pedido.numero}</h2>
-          <label><strong>Situação:</strong> <input type="text" id="inputSituacao" value="${pedido.situacao || ''}" /></label>
-          <label><strong>Entregue por:</strong> <input type="text" id="inputEntregue" value="${pedido.entregue || ''}" /></label>
-          <label><strong>Pagamento:</strong> <input type="text" id="inputPagamento" value="${pedido.pagamento || ''}" /></label>
-          <button onclick="salvarPedido('${pedido.numero}')">Salvar</button>
-        `;
+        document.getElementById("pedidoNumero").innerText = numero;
+        document.getElementById("situacaoInput").value = pedido["Situação"];
+        document.getElementById("entregueInput").value = pedido["Entregue por"];
+        document.getElementById("pagamentoInput").value = pedido["Pagamento"];
+        document.getElementById("resultado").style.display = "block";
       } else {
-        resultado.innerHTML = `<p>Pedido <strong>${codigo}</strong> não encontrado.</p>`;
-      }
-
-      resultado.style.display = "block";
-    }
-
-    function salvarPedido(numero) {
-      const situacao = document.getElementById("inputSituacao").value.trim();
-      const entregue = document.getElementById("inputEntregue").value.trim();
-      const pagamento = document.getElementById("inputPagamento").value.trim();
-
-      const index = pedidos.findIndex(p => p.numero === numero);
-      if (index !== -1) {
-        pedidos[index].situacao = situacao;
-        pedidos[index].entregue = entregue;
-        pedidos[index].pagamento = pagamento;
-
-        alert("Dados salvos localmente!");
-        // Atualiza a exibição para refletir os dados atualizados
-        buscarPedido();
-      } else {
-        alert("Erro: pedido não encontrado para salvar.");
+        alert("Pedido não encontrado.");
+        document.getElementById("resultado").style.display = "none";
       }
     }
 
-    function carregarPedidos() {
-      fetch(PLANILHA_PEDIDOS)
-        .then(response => response.text())
-        .then(csv => {
-          const linhas = csv.trim().split("\n");
-          // Ignorar linha 0 (lixo), usar linha 1 como cabeçalho e dados da linha 2 em diante
-          const dados = linhas.slice(2);
-          pedidos = dados.map(linha => {
-            const valores = linha.split(",");
-            return {
-              numero: valores[0]?.trim(),
-              situacao: valores[1]?.trim(),
-              entregue: valores[2]?.trim(),
-              pagamento: valores[3]?.trim()
-            };
-          });
-        });
+    function salvarEdicao() {
+      const numero = document.getElementById("pedidoNumero").innerText;
+      const situacao = document.getElementById("situacaoInput").value;
+      const entregue = document.getElementById("entregueInput").value;
+      const pagamento = document.getElementById("pagamentoInput").value;
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          numero,
+          situacao,
+          entregue,
+          pagamento
+        })
+      })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        carregarPedidos(); // Recarrega dados atualizados
+      })
+      .catch(err => alert("Erro ao salvar: " + err));
     }
 
+    // Carrega ao iniciar
     carregarPedidos();
   </script>
 </body>
