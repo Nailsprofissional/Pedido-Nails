@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Rastrear Pedido</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    #resultado {
+      margin-top: 30px;
+      border: 1px solid #ccc;
+      padding: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rastreamento de Pedido</h1>
+  <p>Digite o número do pedido:</p>
+  <input type="text" id="pedidoInput" placeholder="Ex: 12345" />
+  <button onclick="buscarPedido()">Buscar</button>
+
+  <div id="resultado"></div>
+
+  <script>
+    const pedidos = {
+      "12345": {
+        situacao: "Separando",
+        entregador: "João Motoboy",
+        pagamento: "Cartão de Crédito"
+      },
+      "98765": {
+        situacao: "Entregue",
+        entregador: "Maria Entregadora",
+        pagamento: "Pix"
+      }
+    };
+
+    function buscarPedido() {
+      const pedido = document.getElementById("pedidoInput").value.trim();
+      const dados = pedidos[pedido];
+      const resultadoDiv = document.getElementById("resultado");
+
+      if (dados) {
+        resultadoDiv.innerHTML = `
+          <h2>Pedido: ${pedido}</h2>
+          <p><strong>Situação:</strong> ${dados.situacao}</p>
+          <p><strong>Entregue por:</strong> ${dados.entregador}</p>
+          <p><strong>Pagamento:</strong> ${dados.pagamento}</p>
+        `;
+        resultadoDiv.style.display = "block";
+      } else {
+        resultadoDiv.innerHTML = `<p>Pedido <strong>${pedido}</strong> não encontrado.</p>`;
+        resultadoDiv.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>
