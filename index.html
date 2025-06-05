@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Rastrear Pedido</title>
+  <meta charset="UTF-8" />
+  <title>Rastreamento de Pedido</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 50px;
+      padding: 40px;
     }
     input, button {
       padding: 10px;
@@ -16,8 +16,8 @@
     }
     #resultado {
       margin-top: 30px;
-      border: 1px solid #ccc;
       padding: 20px;
+      border: 1px solid #ccc;
       display: none;
     }
   </style>
@@ -31,37 +31,49 @@
   <div id="resultado"></div>
 
   <script>
-    const pedidos = {
-      "12345": {
-        situacao: "Separando",
-        entregador: "João Motoboy",
-        pagamento: "Cartão de Crédito"
-      },
-      "98765": {
-        situacao: "Entregue",
-        entregador: "Maria Entregadora",
-        pagamento: "Pix"
-      }
-    };
+    const PLANILHA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQFGmnbStWzAtaaskhGV9E-Qpayo7YQNfdc2Gp8FqioGUmmGAwHfta6yLe8aU10lOpts8jb0IVZemY1/pub?gid=620387686&single=true&output=csv";
+
+    let pedidos = [];
 
     function buscarPedido() {
-      const pedido = document.getElementById("pedidoInput").value.trim();
-      const dados = pedidos[pedido];
-      const resultadoDiv = document.getElementById("resultado");
+      const pedidoInput = document.getElementById("pedidoInput").value.trim();
+      const resultado = document.getElementById("resultado");
+      const pedido = pedidos.find(p => p.numero === pedidoInput);
 
-      if (dados) {
-        resultadoDiv.innerHTML = `
-          <h2>Pedido: ${pedido}</h2>
-          <p><strong>Situação:</strong> ${dados.situacao}</p>
-          <p><strong>Entregue por:</strong> ${dados.entregador}</p>
-          <p><strong>Pagamento:</strong> ${dados.pagamento}</p>
+      if (pedido) {
+        resultado.innerHTML = `
+          <h2>Pedido: ${pedido.numero}</h2>
+          <p><strong>Situação:</strong> ${pedido.situacao}</p>
+          <p><strong>Entregue por:</strong> ${pedido.entregue}</p>
+          <p><strong>Pagamento:</strong> ${pedido.pagamento}</p>
         `;
-        resultadoDiv.style.display = "block";
       } else {
-        resultadoDiv.innerHTML = `<p>Pedido <strong>${pedido}</strong> não encontrado.</p>`;
-        resultadoDiv.style.display = "block";
+        resultado.innerHTML = `<p>Pedido <strong>${pedidoInput}</strong> não encontrado.</p>`;
       }
+
+      resultado.style.display = "block";
     }
+
+    // Lê e converte CSV para objetos JavaScript
+    function carregarPedidos() {
+      fetch(PLANILHA_URL)
+        .then(response => response.text())
+        .then(csv => {
+          const linhas = csv.trim().split("\n");
+          const cabecalhos = linhas[0].split(",");
+          pedidos = linhas.slice(1).map(linha => {
+            const valores = linha.split(",");
+            return {
+              numero: valores[0].trim(),
+              situacao: valores[1]?.trim(),
+              entregue: valores[2]?.trim(),
+              pagamento: valores[3]?.trim()
+            };
+          });
+        });
+    }
+
+    carregarPedidos();
   </script>
 </body>
 </html>
