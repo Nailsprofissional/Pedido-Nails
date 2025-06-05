@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Rastreamento de Parceiros</title>
+  <title>Rastreamento de Pedido</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,53 +23,59 @@
   </style>
 </head>
 <body>
-  <h1>Consulta para Parceiros</h1>
-  <p>Digite o código do parceiro:</p>
-  <input type="text" id="codigoInput" placeholder="Ex: P001" />
-  <button onclick="buscarParceiro()">Buscar</button>
+  <h1>Consulta de Pedido</h1>
+  <p>Digite o número do pedido:</p>
+  <input type="text" id="codigoInput" placeholder="Ex: 7485" />
+  <button onclick="buscarPedido()">Buscar</button>
 
   <div id="resultado"></div>
 
   <script>
-    const PLANILHA_PARCEIROS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQO5w2nTq_15r0NqsEL0h0mf7-3cqEhqVz48cU04a8WJmNNr7jCmf5_blN6A-0ndTb2ic9oCEMJu3GR/pub?gid=0&single=true&output=csv";
+    const PLANILHA_PEDIDOS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQO5w2nTq_15r0NqsEL0h0mf7-3cqEhqVz48cU04a8WJmNNr7jCmf5_blN6A-0ndTb2ic9oCEMJu3GR/pub?gid=0&single=true&output=csv";
 
-    let parceiros = [];
+    let pedidos = [];
 
-    function buscarParceiro() {
+    function buscarPedido() {
       const codigo = document.getElementById("codigoInput").value.trim();
       const resultado = document.getElementById("resultado");
-      const parceiro = parceiros.find(p => p.codigo === codigo);
+      const pedido = pedidos.find(p => p.numero === codigo);
 
-      if (parceiro) {
+      if (pedido) {
         resultado.innerHTML = `
-          <h2>Parceiro: ${parceiro.codigo}</h2>
-          <p><strong>Nome:</strong> ${parceiro.nome}</p>
-          <p><strong>Status:</strong> ${parceiro.status}</p>
+          <h2>Pedido: ${pedido.numero}</h2>
+          <p><strong>Situação:</strong> ${pedido.situacao}</p>
+          <p><strong>Entregue por:</strong> ${pedido.entregue}</p>
+          <p><strong>Pagamento:</strong> ${pedido.pagamento}</p>
         `;
       } else {
-        resultado.innerHTML = `<p>Parceiro <strong>${codigo}</strong> não encontrado.</p>`;
+        resultado.innerHTML = `<p>Pedido <strong>${codigo}</strong> não encontrado.</p>`;
       }
 
       resultado.style.display = "block";
     }
 
-    function carregarParceiros() {
-      fetch(PLANILHA_PARCEIROS)
+    function carregarPedidos() {
+      fetch(PLANILHA_PEDIDOS)
         .then(response => response.text())
         .then(csv => {
           const linhas = csv.trim().split("\n");
-          parceiros = linhas.slice(1).map(linha => {
+
+          // IGNORA a linha 0 (lixo), usa a linha 1 como cabeçalho, e pega os dados da linha 2 em diante
+          const dados = linhas.slice(2);
+
+          pedidos = dados.map(linha => {
             const valores = linha.split(",");
             return {
-              codigo: valores[0].trim(),
-              nome: valores[1]?.trim(),
-              status: valores[2]?.trim()
+              numero: valores[0]?.trim(),
+              situacao: valores[1]?.trim(),
+              entregue: valores[2]?.trim(),
+              pagamento: valores[3]?.trim()
             };
           });
         });
     }
 
-    carregarParceiros();
+    carregarPedidos();
   </script>
 </body>
 </html>
